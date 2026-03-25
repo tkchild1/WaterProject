@@ -16,11 +16,18 @@ namespace WaterProject.API.Controllers
         }
 
         [HttpGet("AllProjects")]
-        public IActionResult GetProjects(int pageSize, int pageNum)
+        public IActionResult GetProjects(int pageSize, int pageNum, [FromQuery] List<string>? projectTypes = null)
         {
-            var something = _waterContext.Projects.Skip((pageNum - 1) * pageSize).Take(pageSize).ToList();
+            var query = _waterContext.Projects.AsQueryable();
 
-            var totalNumProjects = _waterContext.Projects.Count();
+            if(projectTypes != null && projectTypes.Any())
+            {
+                query = query.Where(p => projectTypes.Contains(p.ProjectType));
+            }
+
+            var totalNumProjects = query.Count();
+
+            var something = query.Skip((pageNum - 1) * pageSize).Take(pageSize).ToList();
 
             return Ok(new
             {
@@ -29,11 +36,15 @@ namespace WaterProject.API.Controllers
             });
         }
 
-        [HttpGet("FunctionalProjects")]
-        public IEnumerable<Project> GetFunctionalProjects()
+        [HttpGet("GetProjectTypes")]
+        public IActionResult GetProjectTypes()
         {
-            var something = _waterContext.Projects.Where(p => p.ProjectFunctionalityStatus == "Functional").ToList();
-            return something;
+            var projectTypes = _waterContext.Projects
+                .Select(p => p.ProjectType)
+                .Distinct()
+                .ToList();
+
+            return Ok(projectTypes);
         }
     }
 }
