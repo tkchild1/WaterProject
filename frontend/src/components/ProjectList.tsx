@@ -1,0 +1,73 @@
+import { useEffect, useState } from "react";
+import type { Project } from "../types/Project";
+import { useNavigate } from "react-router-dom";
+import { fetchProjects } from "../api/ProjectsAPI";
+import Pagination from "./Pagination";
+
+function ProjectList({ selectedCategories }: { selectedCategories: string[] }) {
+
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [pageSize, setPageSize] = useState<number>(10);
+    const [pageNum, setPageNumber] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(0);
+    const navigate = useNavigate();
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadProjects = async () => {
+            try {
+                setLoading(true);
+                const data = await fetchProjects(pageSize, pageNum, selectedCategories);
+                setProjects(data.projects);
+                setTotalPages(Math.ceil(data.totalNumProjects / pageSize));
+            } catch (error) {
+                setError((error as Error).message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProjects();
+    }, [pageSize, pageNum, selectedCategories]);
+
+    if (loading) {
+        return <p>Loading projects...</p>;
+    }
+    if (error) {
+        return <p>{error}</p>;
+    }
+
+    return (
+        <>
+            {projects.map((p) => 
+                <div id="projectCard" className="card mb-3" key={p.projectId}>
+                    <div className="card-body">
+                        <h2 className="card-title">{p.projectName}</h2>
+                        <ul className="list-unstyled">
+                            <li><strong>Type:</strong> {p.projectType}</li>
+                            <li><strong>Regional Program:</strong> {p.projectRegionalProgram}</li>
+                            <li><strong>Impact:</strong> {p.projectImpact}</li>
+                            <li><strong>Phase:</strong> {p.projectPhase}</li>
+                            <li><strong>Project Status:</strong> {p.projectFunctionalityStatus}</li>
+                        </ul>
+                        <button className="btn btn-success" onClick={() => navigate(`/donate/${p.projectName}/${p.projectId}`)}>
+                            Donate
+                        </button>
+                    </div>
+                </div>
+            )}
+            <Pagination
+                currentPage={pageNum}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageChange={(newPage) => setPageNumber(newPage)}
+                onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setPageNumber(1); // Reset to first page when page size changes
+                }}
+            />  
+        </>
+    );
+}
+
+export default ProjectList;
