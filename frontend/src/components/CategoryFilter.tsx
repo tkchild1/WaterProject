@@ -9,7 +9,7 @@ function CategoryFilter({ selectedCategories, onCheckBoxChange }: { selectedCate
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch(`http://localhost:5155/api/Water/GetProjectTypes`);
+                const response = await fetch(`https://waterproject-backend-dscdcmagh6hhfrhk.francecentral-01.azurewebsites.net/api/Water/GetProjectTypes`);
                 const data = await response.json();
                 setCategories(data);
             } catch (error) {
